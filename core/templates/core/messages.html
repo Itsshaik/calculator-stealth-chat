@@ -8,6 +8,8 @@
         border-radius: 15px;
         overflow: hidden;
         background-color: var(--messages-bg);
+        display: flex;
+        flex-direction: row;
     }
     
     .contact-list {
@@ -15,6 +17,19 @@
         height: 100%;
         border-right: 1px solid var(--border-color);
         overflow-y: auto;
+        flex: 0 0 100%;
+    }
+    
+    /* On mobile, when a contact is selected, hide the contact list and show chat */
+    @media (max-width: 767px) {
+        .contact-list.hidden-mobile {
+            display: none;
+        }
+        
+        .chat-section.visible-mobile {
+            display: flex !important;
+            flex: 0 0 100% !important;
+        }
     }
     
     .contact-item {
@@ -72,12 +87,34 @@
         display: flex;
         flex-direction: column;
         height: 100%;
+        flex: 0 0 100%;
+    }
+    
+    /* For desktop view */
+    @media (min-width: 768px) {
+        .contact-list {
+            flex: 0 0 33.333%;
+        }
+        
+        .chat-section {
+            flex: 0 0 66.667%;
+        }
     }
     
     .chat-header {
         padding: 15px 20px;
         border-bottom: 1px solid var(--border-color);
         background-color: var(--chat-header-bg);
+        display: flex;
+        align-items: center;
+    }
+    
+    .back-to-contacts {
+        margin-right: 10px;
+        color: var(--text-color);
+        cursor: pointer;
+        font-size: 14px;
+        padding: 2px 8px;
     }
     
     .message-list {

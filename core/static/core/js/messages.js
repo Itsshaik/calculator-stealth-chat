@@ -4,6 +4,34 @@ document.addEventListener('DOMContentLoaded', function() {
     let messageQueue = [];
     const selectedContact = document.querySelector('.contact-item.active');
     
+    // Handle mobile view display if a contact is selected
+    if (window.innerWidth < 768 && selectedContact) {
+        const contactList = document.querySelector('.contact-list');
+        const chatSection = document.querySelector('.chat-section');
+        
+        if (contactList && chatSection) {
+            // Hide contact list and show chat section
+            contactList.classList.add('hidden-mobile');
+            chatSection.classList.add('visible-mobile');
+            
+            // Add back button to chat header
+            const chatHeader = document.querySelector('.chat-header');
+            if (chatHeader) {
+                const backButton = document.createElement('button');
+                backButton.className = 'back-to-contacts btn btn-sm btn-link';
+                backButton.innerHTML = '<i class="fas fa-arrow-left"></i> Back';
+                backButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    contactList.classList.remove('hidden-mobile');
+                    chatSection.classList.remove('visible-mobile');
+                });
+                
+                // Insert at the beginning of the header
+                chatHeader.insertBefore(backButton, chatHeader.firstChild);
+            }
+        }
+    }
+    
     // Message UI functions
     function addMessageToUI(content, isSent, timestamp, messageId = null) {
         const messageList = document.getElementById('messageList');
@@ -321,6 +349,38 @@ document.addEventListener('DOMContentLoaded', function() {
     contactItems.forEach(item => {
         item.addEventListener('click', function() {
             const contactId = this.getAttribute('data-contact-id');
+            
+            // If on mobile, hide contact list and show chat section
+            if (window.innerWidth < 768) {
+                const contactList = document.querySelector('.contact-list');
+                const chatSection = document.querySelector('.chat-section');
+                
+                if (contactList && chatSection) {
+                    contactList.classList.add('hidden-mobile');
+                    chatSection.classList.add('visible-mobile');
+                    
+                    // Add a back button to the chat header if it doesn't exist
+                    let backButton = document.querySelector('.back-to-contacts');
+                    if (!backButton) {
+                        const chatHeader = document.querySelector('.chat-header');
+                        if (chatHeader) {
+                            backButton = document.createElement('button');
+                            backButton.className = 'back-to-contacts btn btn-sm btn-link';
+                            backButton.innerHTML = '<i class="fas fa-arrow-left"></i> Back';
+                            backButton.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                contactList.classList.remove('hidden-mobile');
+                                chatSection.classList.remove('visible-mobile');
+                            });
+                            
+                            // Insert at the beginning of the header
+                            chatHeader.insertBefore(backButton, chatHeader.firstChild);
+                        }
+                    }
+                }
+            }
+            
+            // Navigate to the contact's messages
             window.location.href = `/messages/?contact=${contactId}`;
         });
     });
