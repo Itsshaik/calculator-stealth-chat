@@ -19,13 +19,28 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.repl.dev',
     'https://*.replit.co',
     'https://*.core.repl.co',
-    'https://*.id.repl.co',
+    'https://*.id.repl.co', 
     'https://*.*.repl.co',
+    'https://e2a6f9c7-bdc8-4cd9-b795-f5e81376c7f5.id.repl.co',
+    # HTTP versions for development
+    'http://*.repl.co',
+    'http://*.replit.app',
+    'http://*.repl.dev',
+    'http://*.replit.co',
+    'http://*.core.repl.co',
+    'http://*.id.repl.co',
+    'http://*.*.repl.co',
+    'http://e2a6f9c7-bdc8-4cd9-b795-f5e81376c7f5.id.repl.co',
 ]
 
 # Also set this for better compatibility with Replit
 CSRF_COOKIE_SAMESITE = None
 SESSION_COOKIE_SAMESITE = None
+
+# In development, we might not have HTTPS
+if not DEBUG:
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
 
 # Application definition
 INSTALLED_APPS = [
@@ -111,10 +126,13 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Extra places for collectstatic to find static files
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
-]
+# Ensure Django serves static files in development
+if DEBUG:
+    STATICFILES_DIRS = []
+else:
+    STATICFILES_DIRS = [
+        os.path.join(BASE_DIR, 'static'),
+    ]
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -122,9 +140,3 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # Login URL
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
-
-# CSRF Trusted Origins for Replit
-CSRF_TRUSTED_ORIGINS = [
-    'https://*.replit.app',
-    'https://*.repl.co'
-]

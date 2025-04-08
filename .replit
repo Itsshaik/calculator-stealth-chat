@@ -27,7 +27,7 @@ task = "packager.installForAll"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "pip install django channels uvicorn cryptography && python manage.py migrate && DJANGO_SETTINGS_MODULE=calculator_app.settings uvicorn calculator_app.asgi:application --host 0.0.0.0 --port 5000"
+args = "pip install django channels uvicorn websockets cryptography && python manage.py migrate && DJANGO_SETTINGS_MODULE=calculator_app.settings uvicorn calculator_app.asgi:application --host 0.0.0.0 --port 5000"
 waitForPort = 5000
 
 [deployment]

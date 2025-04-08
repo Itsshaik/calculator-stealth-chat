@@ -12,12 +12,16 @@ from .models import UserProfile, Contact, Message, MessageKey
 from .forms import UserRegistrationForm, UserLoginForm, CalculatorPasswordForm, ContactForm, MessageForm
 from .encryption import generate_key_pair, encrypt_message, decrypt_message
 
+from django.views.decorators.csrf import ensure_csrf_cookie
+
+@ensure_csrf_cookie
 def calculator_view(request):
     """
     Display the calculator interface which serves as the front for the messaging app
     """
     return render(request, 'core/calculator.html')
 
+@ensure_csrf_cookie
 def verify_calculator_password(request):
     """
     Verify the entered calculator password and redirect to messaging if correct

@@ -93,54 +93,65 @@ document.addEventListener('DOMContentLoaded', function() {
     if (selectedContact) {
         const contactId = selectedContact.getAttribute('data-contact-id');
         
-        // Create WebSocket connection
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}/ws/chat/${contactId}/`;
-        chatSocket = new WebSocket(wsUrl);
-        
-        chatSocket.onopen = function(e) {
-            console.log('WebSocket connection established');
+        // Try to establish WebSocket connection - fixed URL for Replit
+        try {
+            // Create WebSocket connection - with error handling
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/chat/${contactId}/`;
+            console.log(`Attempting to connect to WebSocket at: ${wsUrl}`);
+            chatSocket = new WebSocket(wsUrl);
             
-            // Send any queued messages
-            while (messageQueue.length > 0) {
-                const queuedMessage = messageQueue.shift();
-                chatSocket.send(queuedMessage);
-            }
-        };
-        
-        chatSocket.onmessage = function(e) {
-            const data = JSON.parse(e.data);
+            chatSocket.onopen = function(e) {
+                console.log('WebSocket connection established');
+                
+                // Send any queued messages
+                while (messageQueue.length > 0) {
+                    const queuedMessage = messageQueue.shift();
+                    chatSocket.send(queuedMessage);
+                }
+            };
             
-            if (data.type === 'chat_message') {
-                // Check if message is from current user or contact
-                const isSent = data.sender_id === parseInt(document.querySelector('meta[name="user-id"]').content);
+            chatSocket.onmessage = function(e) {
+                console.log('WebSocket message received:', e.data);
+                const data = JSON.parse(e.data);
                 
-                // Add message to UI
-                addMessageToUI(data.message, isSent, new Date(data.timestamp), data.message_id);
-            } 
-            else if (data.type === 'read_receipt') {
-                // Update message status to read (double checkmark)
-                const messageId = data.message_id;
-                const messageItem = document.querySelector(`.message-item[data-message-id="${messageId}"]`);
-                
-                if (messageItem) {
-                    const statusSpan = messageItem.querySelector('.message-status');
-                    if (statusSpan) {
-                        statusSpan.innerHTML = ' <i class="fas fa-check-double"></i>'; // Double checkmark for read
+                if (data.type === 'chat_message') {
+                    // Check if message is from current user or contact
+                    const isSent = data.sender_id === parseInt(document.querySelector('meta[name="user-id"]').content);
+                    
+                    // Add message to UI
+                    addMessageToUI(data.message, isSent, new Date(data.timestamp), data.message_id);
+                } 
+                else if (data.type === 'read_receipt') {
+                    // Update message status to read (double checkmark)
+                    const messageId = data.message_id;
+                    const messageItem = document.querySelector(`.message-item[data-message-id="${messageId}"]`);
+                    
+                    if (messageItem) {
+                        const statusSpan = messageItem.querySelector('.message-status');
+                        if (statusSpan) {
+                            statusSpan.innerHTML = ' <i class="fas fa-check-double"></i>'; // Double checkmark for read
+                        }
                     }
                 }
-            }
-        };
-        
-        chatSocket.onclose = function(e) {
-            console.log('WebSocket connection closed');
-        };
-        
-        chatSocket.onerror = function(e) {
-            console.error('WebSocket error:', e);
-            // Fallback to polling if WebSocket fails
+            };
+            
+            chatSocket.onclose = function(e) {
+                console.log('WebSocket connection closed');
+                // Fallback to polling when WebSocket is closed
+                initPolling(contactId);
+            };
+            
+            chatSocket.onerror = function(e) {
+                console.error('WebSocket error:', e);
+                // Fallback to polling if WebSocket fails
+                initPolling(contactId);
+            };
+        } catch (error) {
+            console.error('Failed to establish WebSocket connection:', error);
+            // Fallback to polling if WebSocket setup fails
             initPolling(contactId);
-        };
+        }
     }
     
     // Load initial messages for the selected contact
