@@ -17,7 +17,15 @@ CSRF_TRUSTED_ORIGINS = [
     'https://*.repl.co',
     'https://*.replit.app',
     'https://*.repl.dev',
+    'https://*.replit.co',
+    'https://*.core.repl.co',
+    'https://*.id.repl.co',
+    'https://*.*.repl.co',
 ]
+
+# Also set this for better compatibility with Replit
+CSRF_COOKIE_SAMESITE = None
+SESSION_COOKIE_SAMESITE = None
 
 # Application definition
 INSTALLED_APPS = [
@@ -27,6 +35,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'channels',
     'core',
 ]
 
@@ -59,6 +68,14 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'calculator_app.wsgi.application'
+ASGI_APPLICATION = 'calculator_app.asgi.application'
+
+# Channels Layer Configuration
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    },
+}
 
 # Database
 DATABASES = {

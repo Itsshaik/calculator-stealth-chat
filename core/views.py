@@ -321,7 +321,8 @@ def get_messages(request, contact_id):
                     'content': decrypted_content,
                     'sent_on': msg.sent_on.strftime('%Y-%m-%d %H:%M:%S'),
                     'sender': msg.sender.username,
-                    'is_self': msg.sender == request.user
+                    'is_self': msg.sender == request.user,
+                    'is_read': msg.is_read
                 })
             
             return JsonResponse({'status': 'success', 'messages': messages_data})
