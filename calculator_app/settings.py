@@ -111,9 +111,20 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
+# Extra places for collectstatic to find static files
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login URL
 LOGIN_URL = '/login/'
 LOGIN_REDIRECT_URL = '/'
+
+# CSRF Trusted Origins for Replit
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.replit.app',
+    'https://*.repl.co'
+]
