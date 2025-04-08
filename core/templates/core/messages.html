@@ -1,0 +1,252 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .messages-container {
+        height: calc(100vh - 150px);
+        border-radius: 15px;
+        overflow: hidden;
+        background-color: var(--messages-bg);
+    }
+    
+    .contact-list {
+        background-color: var(--contact-list-bg);
+        height: 100%;
+        border-right: 1px solid var(--border-color);
+        overflow-y: auto;
+    }
+    
+    .contact-item {
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border-color);
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .contact-item:hover, .contact-item.active {
+        background-color: var(--contact-item-hover);
+    }
+    
+    .contact-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .contact-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: var(--avatar-bg);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 15px;
+    }
+    
+    .contact-details {
+        flex-grow: 1;
+    }
+    
+    .contact-name {
+        font-weight: bold;
+        color: var(--text-color);
+    }
+    
+    .unread-badge {
+        background-color: var(--badge-bg);
+        color: white;
+        border-radius: 50%;
+        min-width: 20px;
+        height: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .chat-section {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+    
+    .chat-header {
+        padding: 15px 20px;
+        border-bottom: 1px solid var(--border-color);
+        background-color: var(--chat-header-bg);
+    }
+    
+    .message-list {
+        flex-grow: 1;
+        padding: 20px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .message-item {
+        max-width: 70%;
+        margin-bottom: 15px;
+        padding: 10px 15px;
+        border-radius: 15px;
+        position: relative;
+    }
+    
+    .message-item.sent {
+        background-color: var(--sent-message-bg);
+        color: var(--sent-message-text);
+        align-self: flex-end;
+        border-bottom-right-radius: 5px;
+    }
+    
+    .message-item.received {
+        background-color: var(--received-message-bg);
+        color: var(--received-message-text);
+        align-self: flex-start;
+        border-bottom-left-radius: 5px;
+    }
+    
+    .message-time {
+        font-size: 12px;
+        opacity: 0.7;
+        margin-top: 5px;
+        text-align: right;
+    }
+    
+    .message-form-container {
+        padding: 15px;
+        border-top: 1px solid var(--border-color);
+        background-color: var(--form-bg);
+    }
+    
+    .message-form {
+        display: flex;
+        align-items: center;
+    }
+    
+    .message-input {
+        flex-grow: 1;
+        border-radius: 20px;
+        padding: 10px 15px;
+        border: 1px solid var(--border-color);
+        background-color: var(--input-bg);
+        color: var(--input-text);
+    }
+    
+    .send-button {
+        margin-left: 10px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: var(--send-btn-bg);
+        color: white;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .send-button:hover {
+        background-color: var(--send-btn-hover);
+    }
+    
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--text-muted);
+    }
+    
+    .empty-state i {
+        font-size: 48px;
+        margin-bottom: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row messages-container">
+    <!-- Contact list column -->
+    <div class="col-md-4 col-lg-3 p-0 contact-list">
+        {% for contact in contacts %}
+        <div class="contact-item {% if selected_contact and selected_contact.id == contact.contact_user.id %}active{% endif %}" 
+             data-contact-id="{{ contact.contact_user.id }}">
+            <div class="contact-info">
+                <div class="contact-avatar" style="background-color: hsl({{ contact.contact_user.id|add:100 }}, 70%, 50%)">
+                    {{ contact.contact_user.username|slice:":1"|upper }}
+                </div>
+                <div class="contact-details">
+                    <div class="contact-name">{{ contact.contact_user.username }}</div>
+                </div>
+                {% if contact.unread_count > 0 %}
+                <div class="unread-badge">{{ contact.unread_count }}</div>
+                {% endif %}
+            </div>
+        </div>
+        {% empty %}
+        <div class="p-4 text-center">
+            <p>No contacts yet.</p>
+            <a href="{% url 'contacts_view' %}" class="btn btn-sm btn-primary">Add Contacts</a>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Chat area column -->
+    <div class="col-md-8 col-lg-9 p-0 chat-section">
+        {% if selected_contact %}
+        <!-- Chat header -->
+        <div class="chat-header">
+            <h5 class="m-0">{{ selected_contact.username }}</h5>
+        </div>
+        
+        <!-- Message list -->
+        <div class="message-list" id="messageList">
+            {% for message in messages %}
+            <div class="message-item {% if message.sender == user %}sent{% else %}received{% endif %}">
+                <div class="message-content">{{ message.content }}</div>
+                <div class="message-time">{{ message.sent_on|date:"M d, g:i a" }}</div>
+            </div>
+            {% empty %}
+            <div class="empty-state">
+                <i class="fas fa-comments"></i>
+                <p>No messages yet. Start a conversation!</p>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- Message form -->
+        <div class="message-form-container">
+            <form class="message-form" id="messageForm">
+                {% csrf_token %}
+                <input type="hidden" name="receiver_id" value="{{ selected_contact.id }}">
+                <input type="text" name="content" class="message-input" placeholder="Type a message..." required>
+                <button type="submit" class="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+        {% else %}
+        <!-- Empty state when no chat is selected -->
+        <div class="empty-state">
+            <i class="fas fa-comments"></i>
+            <p>Select a contact to start messaging</p>
+            {% if not contacts %}
+            <a href="{% url 'contacts_view' %}" class="btn btn-primary mt-3">Add Contacts</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'core/js/messages.js' %}"></script>
+{% endblock %}

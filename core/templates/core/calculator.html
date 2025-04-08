@@ -1,0 +1,250 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    /* Hide navbar for calculator */
+    .navbar {
+        display: none;
+    }
+    
+    /* Calculator specific styles */
+    .calculator-container {
+        max-width: 400px;
+        margin: 20px auto;
+        background-color: var(--calc-bg);
+        border-radius: 20px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+        padding: 25px;
+        user-select: none;
+    }
+
+    .calculator-display {
+        background-color: var(--calc-display-bg);
+        color: var(--calc-display-text);
+        padding: 20px;
+        font-size: 38px;
+        text-align: right;
+        border-radius: 12px;
+        margin-bottom: 25px;
+        overflow: hidden;
+        min-height: 80px;
+        font-family: 'Courier New', monospace;
+    }
+
+    .calculator-buttons {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        grid-gap: 15px;
+    }
+
+    .calculator-button {
+        background-color: var(--calc-button-bg);
+        color: var(--calc-button-text);
+        border: none;
+        border-radius: 12px;
+        font-size: 22px;
+        height: 70px;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+    }
+
+    .calculator-button:hover {
+        background-color: var(--calc-button-hover);
+    }
+
+    .calculator-button:active {
+        transform: scale(0.97);
+    }
+
+    .calculator-button.operation {
+        background-color: var(--calc-op-button-bg);
+        color: var(--calc-op-button-text);
+    }
+
+    .calculator-button.operation:hover {
+        background-color: var(--calc-op-button-hover);
+    }
+
+    .calculator-button.equals {
+        background-color: var(--calc-equals-bg);
+        color: var(--calc-equals-text);
+        grid-column: span 2;
+    }
+
+    .calculator-button.equals:hover {
+        background-color: var(--calc-equals-hover);
+    }
+
+    .calculator-button.clear {
+        background-color: var(--calc-clear-bg);
+        color: var(--calc-clear-text);
+    }
+
+    .calculator-button.clear:hover {
+        background-color: var(--calc-clear-hover);
+    }
+
+    /* Calculator log/history */
+    .calculator-log {
+        font-size: 16px;
+        color: var(--calc-log-text);
+        opacity: 0.7;
+        min-height: 22px;
+        margin-bottom: 10px;
+        text-align: right;
+    }
+
+    /* Password form styling */
+    .password-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .password-modal-content {
+        background-color: var(--modal-bg);
+        color: var(--modal-text);
+        width: 90%;
+        max-width: 400px;
+        border-radius: 15px;
+        padding: 25px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    .password-form {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .password-form input {
+        margin: 10px 0;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid var(--input-border);
+        background-color: var(--input-bg);
+        color: var(--input-text);
+        font-size: 18px;
+    }
+
+    .password-form-buttons {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+
+    .password-form-buttons button {
+        padding: 12px 20px;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.2s;
+    }
+
+    .password-form-buttons .cancel-btn {
+        background-color: var(--cancel-btn-bg);
+        color: var(--cancel-btn-text);
+    }
+
+    .password-form-buttons .submit-btn {
+        background-color: var(--submit-btn-bg);
+        color: var(--submit-btn-text);
+    }
+
+    .password-form-buttons button:hover {
+        transform: translateY(-2px);
+    }
+
+    .password-form-buttons button:active {
+        transform: translateY(0);
+    }
+
+    .auth-links {
+        margin-top: 15px;
+        text-align: center;
+        color: var(--text-color);
+    }
+
+    .auth-links a {
+        color: var(--link-color);
+        margin: 0 10px;
+        text-decoration: none;
+    }
+
+    .auth-links a:hover {
+        text-decoration: underline;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="calculator-container">
+    <div class="calculator-log" id="calculatorLog"></div>
+    <div class="calculator-display" id="display">0</div>
+    <div class="calculator-buttons">
+        <button class="calculator-button clear" data-action="clear">C</button>
+        <button class="calculator-button" data-action="backspace">⌫</button>
+        <button class="calculator-button operation" data-action="percent">%</button>
+        <button class="calculator-button operation" data-action="divide">÷</button>
+        
+        <button class="calculator-button" data-value="7">7</button>
+        <button class="calculator-button" data-value="8">8</button>
+        <button class="calculator-button" data-value="9">9</button>
+        <button class="calculator-button operation" data-action="multiply">×</button>
+        
+        <button class="calculator-button" data-value="4">4</button>
+        <button class="calculator-button" data-value="5">5</button>
+        <button class="calculator-button" data-value="6">6</button>
+        <button class="calculator-button operation" data-action="subtract">-</button>
+        
+        <button class="calculator-button" data-value="1">1</button>
+        <button class="calculator-button" data-value="2">2</button>
+        <button class="calculator-button" data-value="3">3</button>
+        <button class="calculator-button operation" data-action="add">+</button>
+        
+        <button class="calculator-button" data-value="0">0</button>
+        <button class="calculator-button" data-value=".">.</button>
+        <button class="calculator-button equals" data-action="calculate">=</button>
+    </div>
+</div>
+
+<!-- Password Modal -->
+<div class="password-modal" id="passwordModal">
+    <div class="password-modal-content">
+        <h4>Enter Password</h4>
+        <form class="password-form" method="post" action="{% url 'verify_calculator_password' %}">
+            {% csrf_token %}
+            <input type="password" name="calculator_password" id="calculatorPassword" placeholder="Enter password" required>
+            <div class="password-form-buttons">
+                <button type="button" class="cancel-btn" id="cancelPassword">Cancel</button>
+                <button type="submit" class="submit-btn">Submit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="auth-links">
+    {% if user.is_authenticated %}
+        <span>Logged in as {{ user.username }}</span>
+        <a href="{% url 'logout_view' %}">Logout</a>
+    {% else %}
+        <a href="{% url 'login_view' %}">Login</a>
+        <a href="{% url 'register_view' %}">Register</a>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'core/js/calculator.js' %}"></script>
+{% endblock %}

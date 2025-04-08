@@ -1,0 +1,111 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card auth-card">
+            <div class="card-header text-center">
+                <h3><i class="fas fa-calculator"></i> Register for Calculator</h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Username</label>
+                        {{ form.username.errors }}
+                        <input type="text" name="username" class="form-control" id="id_username" required>
+                        <div class="form-text">Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_email" class="form-label">Email</label>
+                        {{ form.email.errors }}
+                        <input type="email" name="email" class="form-control" id="id_email" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_password1" class="form-label">Password</label>
+                        {{ form.password1.errors }}
+                        <input type="password" name="password1" class="form-control" id="id_password1" required>
+                        <div class="form-text">
+                            <ul>
+                                <li>Your password can't be too similar to your other personal information.</li>
+                                <li>Your password must contain at least 8 characters.</li>
+                                <li>Your password can't be a commonly used password.</li>
+                                <li>Your password can't be entirely numeric.</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_password2" class="form-label">Confirm Password</label>
+                        {{ form.password2.errors }}
+                        <input type="password" name="password2" class="form-control" id="id_password2" required>
+                        <div class="form-text">Enter the same password as before, for verification.</div>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="id_calculator_password" class="form-label">Calculator Password</label>
+                        {{ calculator_password_form.calculator_password.errors }}
+                        <input type="password" name="calculator_password" class="form-control" id="id_calculator_password" required>
+                        <div class="form-text">This is the password you'll use to access the messaging app from the calculator. Must be at least 4 characters.</div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Register</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <p class="mb-0">Already have an account? <a href="{% url 'login_view' %}">Login</a></p>
+                <p class="mt-2 mb-0"><a href="{% url 'calculator_view' %}">Return to Calculator</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-card {
+        margin-top: 40px;
+        margin-bottom: 40px;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        background-color: var(--card-bg);
+        color: var(--text-color);
+    }
+    
+    .card-header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 20px;
+    }
+    
+    .card-body {
+        padding: 30px;
+    }
+    
+    .form-control {
+        background-color: var(--input-bg);
+        color: var(--input-text);
+        border-color: var(--input-border);
+    }
+    
+    .form-control:focus {
+        background-color: var(--input-bg);
+        color: var(--input-text);
+    }
+    
+    .form-text {
+        color: var(--text-muted);
+    }
+    
+    .form-text ul {
+        padding-left: 20px;
+    }
+</style>
+{% endblock %}

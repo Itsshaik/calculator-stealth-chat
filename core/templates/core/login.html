@@ -1,0 +1,73 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-4">
+        <div class="card auth-card">
+            <div class="card-header text-center">
+                <h3><i class="fas fa-calculator"></i> Calculator Login</h3>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Username</label>
+                        {{ form.username.errors }}
+                        <input type="text" name="username" class="form-control" id="id_username" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_password" class="form-label">Password</label>
+                        {{ form.password.errors }}
+                        <input type="password" name="password" class="form-control" id="id_password" required>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Sign In</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <p class="mb-0">Don't have an account? <a href="{% url 'register_view' %}">Register</a></p>
+                <p class="mt-2 mb-0"><a href="{% url 'calculator_view' %}">Return to Calculator</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-card {
+        margin-top: 40px;
+        border-radius: 15px;
+        overflow: hidden;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        background-color: var(--card-bg);
+        color: var(--text-color);
+    }
+    
+    .card-header {
+        background-color: var(--primary-color);
+        color: white;
+        padding: 20px;
+    }
+    
+    .card-body {
+        padding: 30px;
+    }
+    
+    .form-control {
+        background-color: var(--input-bg);
+        color: var(--input-text);
+        border-color: var(--input-border);
+    }
+    
+    .form-control:focus {
+        background-color: var(--input-bg);
+        color: var(--input-text);
+    }
+</style>
+{% endblock %}
