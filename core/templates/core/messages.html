@@ -226,6 +226,14 @@
 {% endblock %}
 
 {% block content %}
+<!-- Add user ID to meta for client-side encryption -->
+<meta name="user-id" content="{{ request.user.id }}">
+
+<!-- If we have a temporary private key from registration, pass it to the client -->
+{% if request.session.temp_private_key %}
+<input type="hidden" id="temp_private_key" value="{{ request.session.temp_private_key }}">
+{% endif %}
+
 <div class="row messages-container">
     <!-- Contact list column -->
     <div class="col-md-4 col-lg-3 p-0 contact-list">
@@ -324,5 +332,9 @@
 {% endblock %}
 
 {% block extra_js %}
-<script src="{% static 'core/js/messages.js' %}"></script>
+<!-- Client-side encryption services -->
+<script src="{% static 'core/js/key_management.js' %}"></script>
+<script src="{% static 'core/js/encryption_service.js' %}"></script>
+<!-- Use the version with client-side key handling -->
+<script src="{% static 'core/js/messages_client_keys.js' %}"></script>
 {% endblock %}

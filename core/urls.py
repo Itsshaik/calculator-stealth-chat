@@ -18,4 +18,5 @@ urlpatterns = [
     # API endpoints
     path('api/send-message/', views.send_message, name='send_message'),
     path('api/get-messages/<int:contact_id>/', views.get_messages, name='get_messages'),
+    path('api/decrypt_message/', views.decrypt_message_api, name='decrypt_message_api'),
 ]

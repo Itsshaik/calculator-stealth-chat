@@ -2,6 +2,12 @@
 {% load static %}
 
 {% block content %}
+{% if request.session.temp_private_key %}
+<!-- Hidden input to store the temporary private key -->
+<input type="hidden" id="temp_private_key" value="{{ request.session.temp_private_key }}">
+<input type="hidden" id="user_id" value="{{ request.user.id }}">
+{% endif %}
+
 <div class="row justify-content-center">
     <div class="col-md-8 col-lg-6">
         <div class="card auth-card">
@@ -108,4 +114,40 @@
         padding-left: 20px;
     }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Add key management scripts for new user registration -->
+<script src="{% static 'core/js/key_management.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if we have a temporary private key in the session
+    const tempPrivateKeyElement = document.getElementById('temp_private_key');
+    if (tempPrivateKeyElement && tempPrivateKeyElement.value) {
+        const userId = document.getElementById('user_id');
+        if (userId && userId.value) {
+            console.log('Found temporary private key, storing in localStorage');
+            const success = keyManager.storePrivateKey(tempPrivateKeyElement.value, userId.value);
+            
+            if (success) {
+                console.log('Successfully stored private key in localStorage');
+                
+                // Notify the user that their key has been stored
+                alert('Your encryption keys have been generated and stored securely on your device. ' + 
+                      'For your security, we never store your private key on our servers.');
+                      
+                // Clear the temporary key from the element for security
+                tempPrivateKeyElement.value = '';
+            } else {
+                console.error('Failed to store private key');
+                
+                // Warn the user about key storage failure
+                alert('Warning: Could not store your encryption keys. ' +
+                      'Some messages may not decrypt properly. ' +
+                      'Please make sure your browser supports localStorage.');
+            }
+        }
+    }
+});
+</script>
 {% endblock %}

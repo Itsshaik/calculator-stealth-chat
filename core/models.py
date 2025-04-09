@@ -17,15 +17,15 @@ class UserProfile(models.Model):
 class MessageKey(models.Model):
     """
     Long-term identity keys (similar to Signal's Identity Keys)
+    Only public keys are stored on the server. Private keys are stored exclusively on the client side.
     """
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='message_key')
     public_key = models.TextField()
-    private_key = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return f"{self.user.username}'s Identity Keys"
+        return f"{self.user.username}'s Public Identity Key"
 
 class SignedPreKey(models.Model):
     """

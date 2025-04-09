@@ -13,7 +13,7 @@ from .models import UserProfile, Contact, Message, MessageKey
 from .forms import UserRegistrationForm, UserLoginForm, CalculatorPasswordForm, ContactForm, MessageForm
 from .encryption import generate_key_pair, encrypt_message, decrypt_message
 
-from django.views.decorators.csrf import ensure_csrf_cookie
+from django.views.decorators.csrf import ensure_csrf_cookie, csrf_exempt
 
 @ensure_csrf_cookie
 def calculator_view(request):
@@ -65,11 +65,16 @@ def register_view(request):
             
             # Generate encryption keys
             public_key, private_key = generate_key_pair()
+            
+            # Only save the public key to the database
             MessageKey.objects.create(
                 user=user,
-                public_key=public_key,
-                private_key=private_key
+                public_key=public_key
             )
+            
+            # Save private key to session (temporarily for this request only)
+            # It will be transferred to client-side localStorage in the template
+            request.session['temp_private_key'] = private_key
             
             # Auto-login after registration
             login(request, user)
@@ -330,47 +335,35 @@ def get_messages(request, contact_id):
             is_read=False
         ).update(is_read=True)
         
-        # Get user's private key
+        # Get user's public key (private key is now stored client-side)
         try:
             user_key = MessageKey.objects.get(user=request.user)
             
             messages_data = []
             for msg in messages_query:
-                # Store original message for both sent/received messages
-                original_content = ""
-                try:
-                    if msg.receiver == request.user:
-                        # Decrypt received messages with user's private key
-                        decrypted_content = decrypt_message(msg.content, user_key.private_key)
-                    else:
-                        # For sent messages, we need to get the original content
-                        # Since we have our own private key, we should also store the message for ourselves
-                        try:
-                            # First, try to find a copy of this message where we're the receiver
-                            self_copy = Message.objects.filter(
-                                sender=msg.receiver,
-                                receiver=request.user,
-                                sent_on__gte=msg.sent_on - timezone.timedelta(seconds=2),
-                                sent_on__lte=msg.sent_on + timezone.timedelta(seconds=2)
-                            ).first()
-                            
-                            if self_copy:
-                                # We found a copy we can decrypt
-                                decrypted_content = decrypt_message(self_copy.content, user_key.private_key)
-                            else:
-                                # Fall back to our own saved sent message if we can't find a copy
-                                # This will still be encrypted, but at least consistent with real behavior
-                                decrypted_content = "🔒 " + msg.content[:20] + "..." if len(msg.content) > 20 else msg.content
-                        except Exception as e:
-                            # If anything goes wrong, show placeholder
-                            decrypted_content = "🔒 Encrypted message"
-                except Exception as e:
-                    # Fallback for any decryption issues
-                    decrypted_content = "🔒 Could not decrypt message"
+                # Return encrypted content for client-side decryption
+                # For sent messages, try to find a self-copy
+                encrypted_content = msg.content
+                if msg.sender == request.user:
+                    # Try to find a copy of this message where we're the receiver
+                    self_copy = Message.objects.filter(
+                        sender=msg.receiver,
+                        receiver=request.user,
+                        sent_on__gte=msg.sent_on - timezone.timedelta(seconds=2),
+                        sent_on__lte=msg.sent_on + timezone.timedelta(seconds=2)
+                    ).first()
+                    
+                    if self_copy:
+                        # We found a copy we encrypted for ourselves
+                        encrypted_content = self_copy.content
+                
+                # Provide placeholder content (will be decrypted client-side)
+                placeholder_content = "🔒 Encrypted message"
                     
                 messages_data.append({
                     'id': msg.id,
-                    'content': decrypted_content,
+                    'content': placeholder_content,
+                    'encrypted_content': encrypted_content,
                     'sent_on': msg.sent_on.strftime('%Y-%m-%d %H:%M:%S'),
                     'sender': msg.sender.username,
                     'is_self': msg.sender == request.user,
@@ -471,3 +464,39 @@ def security_verification_view(request, contact_id):
     except MessageKey.DoesNotExist:
         messages.error(request, 'Missing encryption keys.')
         return redirect('messages_view')
+
+@login_required
+@csrf_exempt
+def decrypt_message_api(request):
+    """
+    API endpoint to decrypt a message using the client-provided private key
+    """
+    # Check if user is verified through calculator
+    if not request.session.get('calculator_verified', False):
+        return JsonResponse({'status': 'error', 'message': 'Authentication required'}, status=403)
+    
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'POST method required'}, status=405)
+    
+    try:
+        data = json.loads(request.body)
+        encrypted_message = data.get('encrypted_message')
+        private_key = data.get('private_key')
+        
+        if not encrypted_message or not private_key:
+            return JsonResponse({'status': 'error', 'message': 'Missing required parameters'}, status=400)
+        
+        # Decrypt the message
+        try:
+            decrypted_message = decrypt_message(encrypted_message, private_key)
+            return JsonResponse({
+                'status': 'success',
+                'decrypted_message': decrypted_message
+            })
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)}, status=400)
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON data'}, status=400)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': str(e)}, status=500)
