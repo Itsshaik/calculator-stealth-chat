@@ -10,7 +10,7 @@
     
     /* Calculator specific styles */
     .calculator-container {
-        max-width: 400px;
+        max-width: 600px;
         margin: 20px auto;
         background-color: var(--calc-bg);
         border-radius: 20px;
@@ -26,16 +26,48 @@
         font-size: 38px;
         text-align: right;
         border-radius: 12px;
-        margin-bottom: 25px;
+        margin-bottom: 10px;
         overflow: hidden;
         min-height: 80px;
         font-family: 'Courier New', monospace;
     }
+    
+    .calculator-mode {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        color: var(--calc-log-text);
+        font-size: 14px;
+    }
+    
+    .memory-indicator {
+        color: var(--calc-equals-bg);
+        font-weight: bold;
+    }
+    
+    .calculator-buttons-container {
+        display: flex;
+        flex-direction: row;
+        gap: 15px;
+    }
+    
+    @media (max-width: 768px) {
+        .calculator-buttons-container {
+            flex-direction: column;
+        }
+    }
 
     .calculator-buttons {
         display: grid;
+        grid-gap: 10px;
+    }
+    
+    .calculator-buttons-main {
         grid-template-columns: repeat(4, 1fr);
-        grid-gap: 15px;
+    }
+    
+    .calculator-buttons-scientific {
+        grid-template-columns: repeat(4, 1fr);
     }
 
     .calculator-button {
@@ -86,6 +118,37 @@
 
     .calculator-button.clear:hover {
         background-color: var(--calc-clear-hover);
+    }
+    
+    .calculator-button.scientific {
+        background-color: var(--calc-op-button-bg);
+        color: var(--calc-op-button-text);
+        font-size: 18px;
+    }
+    
+    .calculator-button.scientific:hover {
+        background-color: var(--calc-op-button-hover);
+    }
+    
+    .calculator-button.memory {
+        background-color: var(--calc-equals-bg);
+        color: var(--calc-equals-text);
+        font-size: 18px;
+    }
+    
+    .calculator-button.memory:hover {
+        background-color: var(--calc-equals-hover);
+    }
+    
+    /* Hide the scientific calculator by default on mobile */
+    @media (max-width: 768px) {
+        .calculator-buttons-scientific {
+            display: none;
+        }
+        
+        .calculator-buttons-scientific.visible {
+            display: grid;
+        }
     }
 
     /* Calculator log/history */
@@ -192,30 +255,63 @@
 <div class="calculator-container">
     <div class="calculator-log" id="calculatorLog"></div>
     <div class="calculator-display" id="display">0</div>
-    <div class="calculator-buttons">
-        <button class="calculator-button clear" data-action="clear">C</button>
-        <button class="calculator-button" data-action="backspace">⌫</button>
-        <button class="calculator-button operation" data-action="percent">%</button>
-        <button class="calculator-button operation" data-action="divide">÷</button>
+    <div class="calculator-mode">
+        <span id="angleModeIndicator">DEG</span>
+        <span id="memoryIndicator" class="memory-indicator"></span>
+    </div>
+    <div class="calculator-buttons-container">
+        <div class="calculator-buttons calculator-buttons-main">
+            <button class="calculator-button clear" data-action="clear">C</button>
+            <button class="calculator-button" data-action="backspace">⌫</button>
+            <button class="calculator-button operation" data-action="percent">%</button>
+            <button class="calculator-button operation" data-action="divide">÷</button>
+            
+            <button class="calculator-button" data-value="7">7</button>
+            <button class="calculator-button" data-value="8">8</button>
+            <button class="calculator-button" data-value="9">9</button>
+            <button class="calculator-button operation" data-action="multiply">×</button>
+            
+            <button class="calculator-button" data-value="4">4</button>
+            <button class="calculator-button" data-value="5">5</button>
+            <button class="calculator-button" data-value="6">6</button>
+            <button class="calculator-button operation" data-action="subtract">-</button>
+            
+            <button class="calculator-button" data-value="1">1</button>
+            <button class="calculator-button" data-value="2">2</button>
+            <button class="calculator-button" data-value="3">3</button>
+            <button class="calculator-button operation" data-action="add">+</button>
+            
+            <button class="calculator-button" data-value="0">0</button>
+            <button class="calculator-button" data-value=".">.</button>
+            <button class="calculator-button equals" data-action="calculate">=</button>
+        </div>
         
-        <button class="calculator-button" data-value="7">7</button>
-        <button class="calculator-button" data-value="8">8</button>
-        <button class="calculator-button" data-value="9">9</button>
-        <button class="calculator-button operation" data-action="multiply">×</button>
-        
-        <button class="calculator-button" data-value="4">4</button>
-        <button class="calculator-button" data-value="5">5</button>
-        <button class="calculator-button" data-value="6">6</button>
-        <button class="calculator-button operation" data-action="subtract">-</button>
-        
-        <button class="calculator-button" data-value="1">1</button>
-        <button class="calculator-button" data-value="2">2</button>
-        <button class="calculator-button" data-value="3">3</button>
-        <button class="calculator-button operation" data-action="add">+</button>
-        
-        <button class="calculator-button" data-value="0">0</button>
-        <button class="calculator-button" data-value=".">.</button>
-        <button class="calculator-button equals" data-action="calculate">=</button>
+        <div class="calculator-buttons calculator-buttons-scientific">
+            <button class="calculator-button scientific" data-action="toggleMode">DEG|RAD</button>
+            <button class="calculator-button scientific" data-action="sin">sin</button>
+            <button class="calculator-button scientific" data-action="cos">cos</button>
+            <button class="calculator-button scientific" data-action="tan">tan</button>
+            
+            <button class="calculator-button scientific" data-action="square">x²</button>
+            <button class="calculator-button scientific" data-action="cube">x³</button>
+            <button class="calculator-button scientific" data-action="sqrt">√</button>
+            <button class="calculator-button scientific" data-action="cbrt">∛</button>
+            
+            <button class="calculator-button scientific" data-action="log">log</button>
+            <button class="calculator-button scientific" data-action="ln">ln</button>
+            <button class="calculator-button scientific" data-action="exp">e^x</button>
+            <button class="calculator-button scientific" data-action="pow10">10^x</button>
+            
+            <button class="calculator-button memory" data-action="memoryStore">MS</button>
+            <button class="calculator-button memory" data-action="memoryRecall">MR</button>
+            <button class="calculator-button memory" data-action="memoryAdd">M+</button>
+            <button class="calculator-button memory" data-action="memoryClear">MC</button>
+            
+            <button class="calculator-button scientific" data-action="pi">π</button>
+            <button class="calculator-button scientific" data-action="e">e</button>
+            <button class="calculator-button scientific" data-action="factorial">n!</button>
+            <button class="calculator-button scientific" data-action="toggleScientific">▼</button>
+        </div>
     </div>
 </div>
 

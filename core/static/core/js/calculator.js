@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const passwordModal = document.getElementById('passwordModal');
     const cancelPasswordBtn = document.getElementById('cancelPassword');
     const calculatorContainer = document.querySelector('.calculator-container');
+    const angleModeIndicator = document.getElementById('angleModeIndicator');
+    const memoryIndicator = document.getElementById('memoryIndicator');
+    const scientificButtons = document.querySelector('.calculator-buttons-scientific');
     
     let currentInput = '0';
     let previousInput = '0';
@@ -11,6 +14,9 @@ document.addEventListener('DOMContentLoaded', function() {
     let resetInput = false;
     let calculatorPassword = '';
     let potentialPasswordMode = false;
+    let angleMode = 'DEG'; // DEG or RAD
+    let memoryValue = 0;
+    let scientificVisible = true;
     
     // Calculator button handlers
     document.querySelectorAll('.calculator-button').forEach(button => {
@@ -59,6 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Handle operations and special actions
     function handleAction(action) {
         switch(action) {
+            // Basic operations
             case 'add':
             case 'subtract':
             case 'multiply':
@@ -88,6 +95,207 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'backspace':
                 backspace();
                 break;
+                
+            // Scientific calculator functions
+            case 'sin':
+                handleTrigFunction(Math.sin);
+                break;
+            case 'cos':
+                handleTrigFunction(Math.cos);
+                break;
+            case 'tan':
+                handleTrigFunction(Math.tan);
+                break;
+            case 'square':
+                handlePowerFunction(2);
+                break;
+            case 'cube':
+                handlePowerFunction(3);
+                break;
+            case 'sqrt':
+                handleSquareRoot();
+                break;
+            case 'cbrt':
+                handleCubeRoot();
+                break;
+            case 'log':
+                handleLogarithm(10); // Base 10 logarithm
+                break;
+            case 'ln':
+                handleLogarithm(Math.E); // Natural logarithm
+                break;
+            case 'exp':
+                handleExponential(Math.E); // e^x
+                break;
+            case 'pow10':
+                handleExponential(10); // 10^x
+                break;
+            case 'factorial':
+                handleFactorial();
+                break;
+            case 'pi':
+                currentInput = Math.PI.toString();
+                resetInput = true;
+                break;
+            case 'e':
+                currentInput = Math.E.toString();
+                resetInput = true;
+                break;
+                
+            // Memory functions
+            case 'memoryStore':
+                handleMemoryStore();
+                break;
+            case 'memoryRecall':
+                handleMemoryRecall();
+                break;
+            case 'memoryAdd':
+                handleMemoryAdd();
+                break;
+            case 'memoryClear':
+                handleMemoryClear();
+                break;
+                
+            // Mode toggles
+            case 'toggleMode':
+                toggleAngleMode();
+                break;
+            case 'toggleScientific':
+                toggleScientificCalculator();
+                break;
+        }
+    }
+    
+    // Handle trigonometric functions (sin, cos, tan)
+    function handleTrigFunction(func) {
+        const current = parseFloat(currentInput);
+        if (!isNaN(current)) {
+            // Convert from degrees to radians if in DEG mode
+            let value = current;
+            if (angleMode === 'DEG') {
+                value = value * (Math.PI / 180);
+            }
+            
+            currentInput = func(value).toString();
+            resetInput = true;
+        }
+    }
+    
+    // Handle power functions (x², x³)
+    function handlePowerFunction(power) {
+        const current = parseFloat(currentInput);
+        if (!isNaN(current)) {
+            currentInput = Math.pow(current, power).toString();
+            resetInput = true;
+        }
+    }
+    
+    // Handle square root
+    function handleSquareRoot() {
+        const current = parseFloat(currentInput);
+        if (!isNaN(current) && current >= 0) {
+            currentInput = Math.sqrt(current).toString();
+            resetInput = true;
+        } else if (!isNaN(current) && current < 0) {
+            currentInput = 'Error'; // Can't take square root of negative number
+            resetInput = true;
+        }
+    }
+    
+    // Handle cube root
+    function handleCubeRoot() {
+        const current = parseFloat(currentInput);
+        if (!isNaN(current)) {
+            currentInput = Math.cbrt(current).toString();
+            resetInput = true;
+        }
+    }
+    
+    // Handle logarithm (log, ln)
+    function handleLogarithm(base) {
+        const current = parseFloat(currentInput);
+        if (!isNaN(current) && current > 0) {
+            if (base === 10) {
+                currentInput = Math.log10(current).toString();
+            } else {
+                currentInput = Math.log(current).toString();
+            }
+            resetInput = true;
+        } else if (!isNaN(current) && current <= 0) {
+            currentInput = 'Error'; // Can't take log of negative number or zero
+            resetInput = true;
+        }
+    }
+    
+    // Handle exponential (e^x, 10^x)
+    function handleExponential(base) {
+        const current = parseFloat(currentInput);
+        if (!isNaN(current)) {
+            currentInput = Math.pow(base, current).toString();
+            resetInput = true;
+        }
+    }
+    
+    // Handle factorial
+    function handleFactorial() {
+        const current = parseFloat(currentInput);
+        if (!isNaN(current) && current >= 0 && Number.isInteger(current)) {
+            let result = 1;
+            for (let i = 2; i <= current; i++) {
+                result *= i;
+            }
+            currentInput = result.toString();
+            resetInput = true;
+        } else {
+            currentInput = 'Error'; // Can't calculate factorial of negative or non-integer
+            resetInput = true;
+        }
+    }
+    
+    // Memory functions
+    function handleMemoryStore() {
+        const current = parseFloat(currentInput);
+        if (!isNaN(current)) {
+            memoryValue = current;
+            memoryIndicator.textContent = 'M';
+        }
+    }
+    
+    function handleMemoryRecall() {
+        if (memoryIndicator.textContent === 'M') {
+            currentInput = memoryValue.toString();
+            resetInput = true;
+        }
+    }
+    
+    function handleMemoryAdd() {
+        const current = parseFloat(currentInput);
+        if (!isNaN(current)) {
+            memoryValue += current;
+            memoryIndicator.textContent = 'M';
+        }
+    }
+    
+    function handleMemoryClear() {
+        memoryValue = 0;
+        memoryIndicator.textContent = '';
+    }
+    
+    // Toggle between DEG and RAD mode
+    function toggleAngleMode() {
+        angleMode = angleMode === 'DEG' ? 'RAD' : 'DEG';
+        angleModeIndicator.textContent = angleMode;
+    }
+    
+    // Toggle scientific calculator visibility (for mobile view)
+    function toggleScientificCalculator() {
+        if (window.innerWidth <= 768) {
+            scientificVisible = !scientificVisible;
+            if (scientificVisible) {
+                scientificButtons.classList.add('visible');
+            } else {
+                scientificButtons.classList.remove('visible');
+            }
         }
     }
     
@@ -220,9 +428,13 @@ document.addEventListener('DOMContentLoaded', function() {
     // Keyboard support
     document.addEventListener('keydown', function(event) {
         const key = event.key;
+        const ctrlKey = event.ctrlKey;
+        const shiftKey = event.shiftKey;
         
         // Prevent default behavior for keys we're handling
-        if (/[\d+\-*/.=%]/.test(key) || key === 'Enter' || key === 'Backspace' || key === 'Escape') {
+        if (/[\d+\-*/.=%^!]/.test(key) || key === 'Enter' || key === 'Backspace' || key === 'Escape' ||
+            (ctrlKey && /[sctl]/.test(key.toLowerCase())) || 
+            (shiftKey && key === '^')) {
             event.preventDefault();
         }
         
@@ -234,7 +446,7 @@ document.addEventListener('DOMContentLoaded', function() {
         else if (key === '.') {
             handleNumberInput('.');
         }
-        // Handle operations
+        // Handle basic operations
         else if (key === '+') {
             handleOperation('add');
         }
@@ -270,6 +482,45 @@ document.addEventListener('DOMContentLoaded', function() {
         // Handle percent
         else if (key === '%') {
             handlePercent();
+        }
+        // Handle scientific functions with keyboard shortcuts
+        else if (ctrlKey && key.toLowerCase() === 's') {
+            handleTrigFunction(Math.sin);
+        }
+        else if (ctrlKey && key.toLowerCase() === 'c') {
+            handleTrigFunction(Math.cos);
+        }
+        else if (ctrlKey && key.toLowerCase() === 't') {
+            handleTrigFunction(Math.tan);
+        }
+        else if (key === '^' || (shiftKey && key === '^')) {
+            handlePowerFunction(2);
+        }
+        else if (ctrlKey && key.toLowerCase() === 'r') {
+            handleSquareRoot();
+        }
+        else if (ctrlKey && key.toLowerCase() === 'l') {
+            handleLogarithm(10);
+        }
+        else if (key === '!') {
+            handleFactorial();
+        }
+        // Memory functions
+        else if (key === 'm' && ctrlKey && shiftKey) {
+            handleMemoryStore();
+        }
+        else if (key === 'm' && ctrlKey) {
+            handleMemoryRecall();
+        }
+        else if (key === 'm' && shiftKey) {
+            handleMemoryAdd();
+        }
+        else if (key === 'm') {
+            handleMemoryClear();
+        }
+        // Toggle DEG/RAD mode
+        else if (key.toLowerCase() === 'd' && ctrlKey) {
+            toggleAngleMode();
         }
         
         updateDisplay();
