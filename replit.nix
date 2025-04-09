@@ -1,5 +1,6 @@
 {pkgs}: {
   deps = [
+    pkgs.wget
     pkgs.rustc
     pkgs.pkg-config
     pkgs.openssl
