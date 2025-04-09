@@ -153,6 +153,25 @@ class ChatConsumer(AsyncWebsocketConsumer):
                 sent_on=timezone.now()
             )
             
+            # IMPROVEMENT: For better user experience, also save a special copy for self
+            # Get our own public key
+            try:
+                own_key = MessageKey.objects.get(user=self.user)
+                # Encrypt with our own public key so we can decrypt it later
+                self_encrypted = encrypt_message(content, own_key.public_key)
+                
+                # Save a special "sent to self" message that we can decrypt later
+                Message.objects.create(
+                    sender=contact_user,  # Trick: mark it as if it came from receiver
+                    receiver=self.user,  # To self
+                    content=self_encrypted,
+                    is_read=True,  # Already read
+                    sent_on=message.sent_on  # Same timestamp to match
+                )
+            except MessageKey.DoesNotExist:
+                # Not critical if this fails, user will still see encrypted message
+                pass
+                
             return {
                 'message_id': message.id,
                 'content': content,  # Return the original content for the sender
