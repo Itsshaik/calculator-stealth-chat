@@ -1,0 +1,6 @@
+version: "2"
+authtoken: 2rEzWAcbfBwU74xSb9ORk6rG3WH_6J1fi3nRLHCYqm5YUYHjA
+tunnels:
+  calculator:
+    proto: http
+    addr: 5000
