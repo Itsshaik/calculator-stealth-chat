@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Django
+*.log
+*.pot
+*.pyc
+db.sqlite3
+db.sqlite3-journal
+media
+
+# Virtual environments
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+.env
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ngrok
+.ngrok2/
+ngrok.yml
+current_ngrok_url.txt
+
+# Local development
+.DS_Store
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pythonlibs/
+staticfiles/
+
+# Secrets
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
