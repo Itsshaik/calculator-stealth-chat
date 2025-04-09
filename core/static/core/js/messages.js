@@ -123,9 +123,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Try to establish WebSocket connection - fixed URL for Replit
         try {
-            // Create WebSocket connection - with error handling
+            // Create WebSocket connection - with error handling for ngrok
             const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-            const wsUrl = `${protocol}//${window.location.host}/ws/chat/${contactId}/`;
+            
+            // Extract the host without any port information
+            let host = window.location.host;
+            
+            // Special handling for ngrok URLs
+            if (host.includes('ngrok-free.app') || host.includes('ngrok.io') || host.includes('ngrok.app')) {
+                console.log('Detected ngrok domain, using special WebSocket handling');
+            }
+            
+            const wsUrl = `${protocol}//${host}/ws/chat/${contactId}/`;
             console.log(`Attempting to connect to WebSocket at: ${wsUrl}`);
             chatSocket = new WebSocket(wsUrl);
             

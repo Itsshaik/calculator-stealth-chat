@@ -31,11 +31,23 @@ CSRF_TRUSTED_ORIGINS = [
     'http://*.id.repl.co',
     'http://*.*.repl.co',
     'http://e2a6f9c7-bdc8-4cd9-b795-f5e81376c7f5.id.repl.co',
+    # Ngrok domains
+    'https://*.ngrok-free.app',
+    'https://*.ngrok.io',
+    'https://*.ngrok.app',
+    'http://*.ngrok-free.app',
+    'http://*.ngrok.io',
+    'http://*.ngrok.app',
 ]
 
-# Also set this for better compatibility with Replit
+# Also set this for better compatibility with Replit and ngrok
 CSRF_COOKIE_SAMESITE = None
 SESSION_COOKIE_SAMESITE = None
+CORS_ALLOW_ALL_ORIGINS = True
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
+# For WebSocket support through ngrok
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 # In development, we might not have HTTPS
 if not DEBUG:
