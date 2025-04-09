@@ -12,6 +12,9 @@ urlpatterns = [
     path('contacts/delete/<int:contact_id>/', views.delete_contact, name='delete_contact'),
     path('settings/', views.settings_view, name='settings_view'),
     
+    # Security features (WhatsApp-like)
+    path('security/verify/<int:contact_id>/', views.security_verification_view, name='security_verification'),
+    
     # API endpoints
     path('api/send-message/', views.send_message, name='send_message'),
     path('api/get-messages/<int:contact_id>/', views.get_messages, name='get_messages'),

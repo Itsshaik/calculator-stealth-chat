@@ -258,6 +258,18 @@
         <!-- Chat header -->
         <div class="chat-header">
             <h5 class="m-0">{{ selected_contact.username }}</h5>
+            <div class="ms-auto d-flex align-items-center">
+                {% with contact=selected_contact_obj %}
+                {% if contact %}
+                <span class="me-2" title="{% if contact.security_verified %}Security verified{% else %}Security not verified{% endif %}">
+                    <i class="{% if contact.security_verified %}fas fa-shield-alt text-success{% else %}fas fa-shield-alt text-warning{% endif %}"></i>
+                </span>
+                <a href="{% url 'security_verification' contact.id %}" class="btn btn-sm btn-outline-primary">
+                    {% if contact.security_verified %}Security Verified{% else %}Verify Security{% endif %}
+                </a>
+                {% endif %}
+                {% endwith %}
+            </div>
         </div>
         
         <!-- Message list -->

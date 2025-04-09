@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.utils import timezone
 from .models import Message, Contact, MessageKey
 from .encryption import encrypt_message, decrypt_message
+from .signal_protocol import generate_security_verification_code, generate_qr_verification_data
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
@@ -195,4 +196,133 @@ class ChatConsumer(AsyncWebsocketConsumer):
             message.save()
             return True
         except Message.DoesNotExist:
+            return False
+
+
+class SecurityVerificationConsumer(AsyncWebsocketConsumer):
+    async def connect(self):
+        self.user = self.scope['user']
+        self.contact_id = self.scope['url_route']['kwargs']['contact_id']
+        
+        # Check if user is authenticated
+        if not self.user.is_authenticated:
+            # Close connection if user is not authenticated
+            await self.close()
+            return
+        
+        # Check if calculator_verified is in session
+        session = self.scope['session']
+        if not session.get('calculator_verified', False):
+            # Close connection if user is not verified through calculator
+            await self.close()
+            return
+        
+        # Check if contact exists and get contact object
+        try:
+            self.contact = await self.get_contact()
+            if not self.contact:
+                # Close connection if contact does not exist
+                await self.close()
+                return
+        except Exception:
+            # Close connection if there was an error checking the contact
+            await self.close()
+            return
+        
+        # Create a unique room name for this verification session
+        self.room_group_name = f'security_verification_{self.contact.id}'
+        
+        # Join room group
+        await self.channel_layer.group_add(
+            self.room_group_name,
+            self.channel_name
+        )
+        
+        await self.accept()
+        
+        # Send initial security code and verification status
+        security_code, qr_data = await self.get_security_verification_data()
+        await self.send(text_data=json.dumps({
+            'type': 'security_data',
+            'security_code': security_code,
+            'qr_data': qr_data,
+            'verified': self.contact.security_verified
+        }))
+    
+    async def disconnect(self, close_code):
+        # Leave room group
+        await self.channel_layer.group_discard(
+            self.room_group_name,
+            self.channel_name
+        )
+    
+    # Receive message from WebSocket
+    async def receive(self, text_data):
+        text_data_json = json.loads(text_data)
+        message_type = text_data_json.get('type')
+        
+        if message_type == 'verify_security':
+            # Handle security verification
+            success = await self.verify_security()
+            
+            if success:
+                # Send verification update to room group
+                await self.channel_layer.group_send(
+                    self.room_group_name,
+                    {
+                        'type': 'security_verified',
+                        'verified': True,
+                    }
+                )
+    
+    # Receive verification update from room group
+    async def security_verified(self, event):
+        # Send verification status to WebSocket
+        await self.send(text_data=json.dumps({
+            'type': 'security_verified',
+            'verified': event['verified'],
+        }))
+    
+    @database_sync_to_async
+    def get_contact(self):
+        try:
+            contact_user = User.objects.get(id=self.contact_id)
+            return Contact.objects.filter(owner=self.user, contact_user=contact_user).first()
+        except User.DoesNotExist:
+            return None
+    
+    @database_sync_to_async
+    def get_security_verification_data(self):
+        try:
+            # Get both users' keys
+            user_key = MessageKey.objects.get(user=self.user)
+            contact_user = User.objects.get(id=self.contact_id)
+            contact_key = MessageKey.objects.get(user=contact_user)
+            
+            # Generate or get security code
+            if not self.contact.security_code:
+                security_code = generate_security_verification_code(
+                    user_key.public_key, 
+                    contact_key.public_key
+                )
+                self.contact.security_code = security_code
+                self.contact.save()
+            
+            # Generate QR code data
+            qr_data = generate_qr_verification_data(
+                user_key.public_key,
+                contact_key.public_key
+            )
+            
+            return self.contact.security_code, qr_data
+        except (User.DoesNotExist, MessageKey.DoesNotExist):
+            return "Encryption keys not available", ""
+    
+    @database_sync_to_async
+    def verify_security(self):
+        try:
+            self.contact.security_verified = True
+            self.contact.save()
+            return True
+        except Exception:
             return False

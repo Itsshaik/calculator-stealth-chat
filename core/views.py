@@ -133,17 +133,20 @@ def messages_view(request):
     # Get selected contact if any
     selected_contact_id = request.GET.get('contact')
     selected_contact = None
+    selected_contact_obj = None  # The Contact object (not User) for security verification
     messages_list = []
     
     if selected_contact_id:
         try:
             selected_contact = User.objects.get(id=selected_contact_id)
             
-            # Check if this is a valid contact
-            is_contact = Contact.objects.filter(owner=request.user, contact_user=selected_contact).exists()
-            if not is_contact:
+            # Check if this is a valid contact and get the Contact object
+            contact_obj = Contact.objects.filter(owner=request.user, contact_user=selected_contact).first()
+            if not contact_obj:
                 selected_contact = None
             else:
+                selected_contact_obj = contact_obj
+                
                 # Get messages between users
                 messages_list = Message.objects.filter(
                     (Q(sender=request.user) & Q(receiver=selected_contact)) | 
@@ -162,6 +165,7 @@ def messages_view(request):
     return render(request, 'core/messages.html', {
         'contacts': contacts,
         'selected_contact': selected_contact,
+        'selected_contact_obj': selected_contact_obj,  # Pass the Contact object for security verification
         'messages': messages_list,
         'form': MessageForm() if selected_contact else None
     })
@@ -412,3 +416,58 @@ def settings_view(request):
     return render(request, 'core/settings.html', {
         'profile': profile
     })
+
+@login_required
+def security_verification_view(request, contact_id):
+    """
+    Security verification view - similar to WhatsApp's security code verification
+    """
+    # Check if user is verified through calculator
+    if not request.session.get('calculator_verified', False):
+        return redirect('calculator_view')
+    
+    # Get the contact
+    contact = get_object_or_404(Contact, id=contact_id, owner=request.user)
+    contact_user = contact.contact_user
+    
+    # Get keys
+    try:
+        user_key = MessageKey.objects.get(user=request.user)
+        contact_key = MessageKey.objects.get(user=contact_user)
+        
+        # Get or generate security code
+        if not contact.security_code:
+            # Use the signal protocol to generate a security code
+            from .signal_protocol import generate_security_verification_code
+            security_code = generate_security_verification_code(
+                user_key.public_key, 
+                contact_key.public_key
+            )
+            contact.security_code = security_code
+            contact.save()
+        
+        # Handle verification confirmation
+        if request.method == 'POST':
+            action = request.POST.get('action')
+            if action == 'verify':
+                contact.security_verified = True
+                contact.save()
+                messages.success(request, f'You have verified the security code for {contact_user.username}.')
+                return redirect('messages_view')
+        
+        # Generate QR code data for verification
+        from .signal_protocol import generate_qr_verification_data
+        qr_data = generate_qr_verification_data(
+            user_key.public_key,
+            contact_key.public_key
+        )
+        
+        return render(request, 'core/security_verification.html', {
+            'contact': contact,
+            'security_code': contact.security_code,
+            'qr_data': qr_data
+        })
+    
+    except MessageKey.DoesNotExist:
+        messages.error(request, 'Missing encryption keys.')
+        return redirect('messages_view')
