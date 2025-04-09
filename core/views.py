@@ -6,6 +6,7 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.http import require_POST
 from django.db.models import Q
+from django.utils import timezone
 import json
 
 from .models import UserProfile, Contact, Message, MessageKey
@@ -312,13 +313,37 @@ def get_messages(request, contact_id):
             
             messages_data = []
             for msg in messages_query:
-                # Decrypt message if user is the receiver
-                if msg.receiver == request.user:
-                    decrypted_content = decrypt_message(msg.content, user_key.private_key)
-                else:
-                    # If user is sender, the message is already encrypted for the receiver
-                    # We don't have the receiver's private key, so just show the original content
-                    decrypted_content = msg.content
+                # Store original message for both sent/received messages
+                original_content = ""
+                try:
+                    if msg.receiver == request.user:
+                        # Decrypt received messages with user's private key
+                        decrypted_content = decrypt_message(msg.content, user_key.private_key)
+                    else:
+                        # For sent messages, we need to get the original content
+                        # Since we have our own private key, we should also store the message for ourselves
+                        try:
+                            # First, try to find a copy of this message where we're the receiver
+                            self_copy = Message.objects.filter(
+                                sender=msg.receiver,
+                                receiver=request.user,
+                                sent_on__gte=msg.sent_on - timezone.timedelta(seconds=2),
+                                sent_on__lte=msg.sent_on + timezone.timedelta(seconds=2)
+                            ).first()
+                            
+                            if self_copy:
+                                # We found a copy we can decrypt
+                                decrypted_content = decrypt_message(self_copy.content, user_key.private_key)
+                            else:
+                                # Fall back to our own saved sent message if we can't find a copy
+                                # This will still be encrypted, but at least consistent with real behavior
+                                decrypted_content = "🔒 " + msg.content[:20] + "..." if len(msg.content) > 20 else msg.content
+                        except Exception as e:
+                            # If anything goes wrong, show placeholder
+                            decrypted_content = "🔒 Encrypted message"
+                except Exception as e:
+                    # Fallback for any decryption issues
+                    decrypted_content = "🔒 Could not decrypt message"
                     
                 messages_data.append({
                     'id': msg.id,

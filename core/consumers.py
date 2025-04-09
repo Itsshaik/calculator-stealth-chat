@@ -75,7 +75,7 @@ class ChatConsumer(AsyncWebsocketConsumer):
                         self.room_group_name,
                         {
                             'type': 'chat_message',
-                            'message': message_data['content'],
+                            'message': content if self.user.id == self.scope["user"].id else message_data['content'],
                             'sender_id': self.user.id,
                             'message_id': message_data['message_id'],
                             'timestamp': message_data['timestamp'].isoformat(),
