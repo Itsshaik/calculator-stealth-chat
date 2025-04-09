@@ -2,6 +2,13 @@
 
 A secure messaging application disguised as a calculator app, offering end-to-end encrypted communications similar to WhatsApp.
 
+## GitHub Repository
+
+This project is available on GitHub:
+[https://github.com/Itsshaik/calculator-stealth-chat](https://github.com/Itsshaik/calculator-stealth-chat)
+
+The GitHub repository description always contains the current active URL of the application.
+
 ## Features
 
 - End-to-end encryption using the Signal Protocol
@@ -29,6 +36,14 @@ To get the current URL for accessing your application:
 ```
 
 This will display the URL and also save it to `current_ngrok_url.txt` for future reference.
+
+To update the GitHub repository description with the current URL:
+
+```bash
+./update_github_url.sh
+```
+
+This makes it easy to find your current URL by just looking at the GitHub repository.
 
 **Note:** The ngrok URL will change each time you restart the application (free plan limitation).
 
